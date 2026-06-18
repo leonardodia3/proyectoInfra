@@ -38,6 +38,8 @@ resource "aws_lambda_function" "register_student" {
   handler       = "index.handler"
   runtime       = "nodejs20.x"
   role          = aws_iam_role.lambda_role.arn
+  code_signing_config_arn = aws_lambda_code_signing_config.register_student.arn
+  reserved_concurrent_executions = 1000
 }
 
 resource "aws_lambda_function" "list_students" {
@@ -48,6 +50,8 @@ resource "aws_lambda_function" "list_students" {
   handler       = "index.handler"
   runtime       = "nodejs20.x"
   role          = aws_iam_role.lambda_role.arn
+  code_signing_config_arn = aws_lambda_code_signing_config.register_student.arn
+  reserved_concurrent_executions = 1000
 }
 
 resource "aws_lambda_function" "attendance" {
@@ -57,6 +61,8 @@ resource "aws_lambda_function" "attendance" {
   handler          = "index.handler"
   runtime          = "nodejs20.x"
   role             = aws_iam_role.lambda_role.arn
+  code_signing_config_arn = aws_lambda_code_signing_config.register_student.arn
+  reserved_concurrent_executions = 1000
 }
 
 resource "aws_lambda_function" "manual_attendance" {
@@ -66,6 +72,8 @@ resource "aws_lambda_function" "manual_attendance" {
   handler          = "index.handler"
   runtime          = "nodejs20.x"
   role             = aws_iam_role.lambda_role.arn
+  code_signing_config_arn = aws_lambda_code_signing_config.register_student.arn
+  reserved_concurrent_executions = 1000
 }
 
 resource "aws_lambda_function" "attendance_history" {
@@ -75,4 +83,56 @@ resource "aws_lambda_function" "attendance_history" {
   handler       = "index.handler"
   runtime       = "nodejs20.x"
   role          = aws_iam_role.lambda_role.arn
+  code_signing_config_arn = aws_lambda_code_signing_config.register_student.arn
+  reserved_concurrent_executions = 1000
+}
+
+
+resource "aws_lambda_code_signing_config" "register_student" {
+  allowed_publishers {
+    signing_profile_version_arns = [aws_signer_signing_profile.register_student.version_arn]
+  }
+
+  policies {
+    untrusted_artifact_on_deployment = "Enforce"
+  }
+}
+
+resource "aws_lambda_code_signing_config" "list_students" {
+  allowed_publishers {
+    signing_profile_version_arns = [aws_signer_signing_profile.list_students.version_arn]
+  }
+
+  policies {
+    untrusted_artifact_on_deployment = "Enforce"
+  }
+}
+
+resource "aws_lambda_code_signing_config" "attendance" {
+  allowed_publishers {
+    signing_profile_version_arns = [aws_signer_signing_profile.attendance.version_arn]
+  }
+
+  policies {
+    untrusted_artifact_on_deployment = "Enforce"
+  }
+}
+
+resource "aws_lambda_code_signing_config" "manual_attendance" {
+  allowed_publishers {
+    signing_profile_version_arns = [aws_signer_signing_profile.manual_attendance.version_arn]
+  }
+
+  policies {
+    untrusted_artifact_on_deployment = "Enforce"
+  }
+}
+resource "aws_lambda_code_signing_config" "attendance_history" {
+  allowed_publishers {
+    signing_profile_version_arns = [aws_signer_signing_profile.attendance_history.version_arn]
+  }
+
+  policies {
+    untrusted_artifact_on_deployment = "Enforce"
+  }
 }
