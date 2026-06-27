@@ -2,11 +2,11 @@
 resource "aws_api_gateway_rest_api" "attendance_api" {
   name        = "attendance-api"
   description = "API Control de Asistencia"
-
   lifecycle {
     create_before_destroy = true
   }
 }
+
 # Recurso /students
 resource "aws_api_gateway_resource" "students" {
   rest_api_id = aws_api_gateway_rest_api.attendance_api.id
@@ -14,8 +14,7 @@ resource "aws_api_gateway_resource" "students" {
   path_part   = "students"
 }
 
-# POST /
-# Api completa POST /students
+# POST /students
 resource "aws_api_gateway_method" "post_students" {
   rest_api_id   = aws_api_gateway_rest_api.attendance_api.id
   resource_id   = aws_api_gateway_resource.students.id
@@ -23,6 +22,7 @@ resource "aws_api_gateway_method" "post_students" {
   authorization = "NONE" # nosonar
   #authorizer_id = aws_api_gateway_authorizer.cognito.id
 }
+
 resource "aws_api_gateway_integration" "register_student" {
   rest_api_id             = aws_api_gateway_rest_api.attendance_api.id
   resource_id             = aws_api_gateway_resource.students.id
@@ -32,8 +32,7 @@ resource "aws_api_gateway_integration" "register_student" {
   uri                     = aws_lambda_function.register_student.invoke_arn
 }
 
-# GET /
-# Api completa GET /students
+# GET /students
 resource "aws_api_gateway_method" "get_students" {
   rest_api_id   = aws_api_gateway_rest_api.attendance_api.id
   resource_id   = aws_api_gateway_resource.students.id
@@ -41,6 +40,7 @@ resource "aws_api_gateway_method" "get_students" {
   authorization = "NONE" # nosonar
   #authorizer_id = aws_api_gateway_authorizer.cognito.id
 }
+
 resource "aws_api_gateway_integration" "list_students" {
   rest_api_id             = aws_api_gateway_rest_api.attendance_api.id
   resource_id             = aws_api_gateway_resource.students.id
@@ -67,11 +67,11 @@ resource "aws_api_gateway_deployment" "attendance" {
     aws_api_gateway_integration.list_students
   ]
   lifecycle {
-   create_before_destroy = true
- }
+    create_before_destroy = true
+  }
 }
 
-#Stage
+# Stage
 resource "aws_api_gateway_stage" "prod" {
   stage_name    = "prod"
   rest_api_id   = aws_api_gateway_rest_api.attendance_api.id
@@ -82,12 +82,20 @@ resource "aws_api_gateway_stage" "prod" {
   access_log_settings {
     destination_arn = aws_cloudwatch_log_group.api_gateway_logs.arn
   }
+}
 
-  # CKV2_AWS_4 - Logging level
-  default_route_settings {
+# CKV2_AWS_4 - Logging level para REST API
+resource "aws_api_gateway_method_settings" "all" {
+  rest_api_id = aws_api_gateway_rest_api.attendance_api.id
+  stage_name  = aws_api_gateway_stage.prod.stage_name
+  method_path = "*/*"
+
+  settings {
     logging_level = "INFO"
   }
 }
+
+# CloudWatch Log Group para API Gateway
 resource "aws_cloudwatch_log_group" "api_gateway_logs" {
   name              = "/aws/api-gateway/attendance-api"
   retention_in_days = 7
