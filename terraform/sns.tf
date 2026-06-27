@@ -1,5 +1,7 @@
 resource "aws_sns_topic" "attendance_alerts" {
-  name = "attendance-alerts"
+  name              = "attendance-alerts"
+  # CKV_AWS_26 - Cifrado SNS con KMS
+  kms_master_key_id = aws_kms_key.dynamo_key.key_id
 }
 
 resource "aws_sns_topic_subscription" "email_alert" {
