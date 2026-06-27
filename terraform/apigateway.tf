@@ -85,18 +85,23 @@ resource "aws_api_gateway_stage" "prod" {
 }
 
 # CKV2_AWS_4 - Logging level para REST API
+# CKV_AWS_120 / CKV_AWS_225 - Caching habilitado
 resource "aws_api_gateway_method_settings" "all" {
   rest_api_id = aws_api_gateway_rest_api.attendance_api.id
   stage_name  = aws_api_gateway_stage.prod.stage_name
   method_path = "*/*"
 
   settings {
-    logging_level = "INFO"
+    logging_level      = "INFO"
+    caching_enabled    = true
+    cache_data_encrypted = true
   }
 }
 
-# CloudWatch Log Group para API Gateway
+# CKV_AWS_158 - CloudWatch Log Group cifrado con KMS
+# CKV_AWS_338 - Retención de al menos 1 año (365 días)
 resource "aws_cloudwatch_log_group" "api_gateway_logs" {
   name              = "/aws/api-gateway/attendance-api"
-  retention_in_days = 7
+  retention_in_days = 365
+  kms_key_id        = aws_kms_key.dynamo_key.arn
 }
