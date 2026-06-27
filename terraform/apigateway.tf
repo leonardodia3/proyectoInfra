@@ -76,5 +76,15 @@ resource "aws_api_gateway_stage" "prod" {
   stage_name    = "prod"
   rest_api_id   = aws_api_gateway_rest_api.attendance_api.id
   deployment_id = aws_api_gateway_deployment.attendance.id
- xray_tracing_enabled = true
+  xray_tracing_enabled = true
+
+  # CKV_AWS_76 - Access Logging
+  access_log_settings {
+    destination_arn = aws_cloudwatch_log_group.api_gateway_logs.arn
+  }
+
+  # CKV2_AWS_4 - Logging level
+  default_route_settings {
+    logging_level = "INFO"
+  }
 }
