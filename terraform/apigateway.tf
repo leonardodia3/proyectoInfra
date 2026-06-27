@@ -88,3 +88,7 @@ resource "aws_api_gateway_stage" "prod" {
     logging_level = "INFO"
   }
 }
+resource "aws_cloudwatch_log_group" "api_gateway_logs" {
+  name              = "/aws/api-gateway/attendance-api"
+  retention_in_days = 7
+}
