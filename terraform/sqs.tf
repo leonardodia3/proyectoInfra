@@ -1,7 +1,9 @@
 resource "aws_sqs_queue" "tardanza_queue" {
-  name                      = "tardanza-queue"
-  message_retention_seconds = 86400
+  name                       = "tardanza-queue"
+  message_retention_seconds  = 86400
   visibility_timeout_seconds = 30
+  # CKV_AWS_27 - Cifrado SQS con KMS
+  kms_master_key_id          = aws_kms_key.dynamo_key.key_id
 }
 
 # Permiso para que Lambda encole y consuma mensajes
