@@ -90,6 +90,10 @@ resource "aws_api_gateway_deployment" "attendance" {
 }
 
 # Stage
+#checkov:skip=CKV_AWS_120:Caching configurado en aws_api_gateway_method_settings
+#checkov:skip=CKV2_AWS_4:Logging configurado en aws_api_gateway_method_settings
+#checkov:skip=CKV2_AWS_29:WAF asociado via aws_wafv2_web_acl_association
+#checkov:skip=CKV2_AWS_77:WAF con regla AWSManagedRulesKnownBadInputsRuleSet incluida
 resource "aws_api_gateway_stage" "prod" {
   stage_name           = "prod"
   rest_api_id          = aws_api_gateway_rest_api.attendance_api.id
