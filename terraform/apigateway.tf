@@ -16,10 +16,10 @@ resource "aws_api_gateway_resource" "students" {
 
 # Request Validator
 resource "aws_api_gateway_request_validator" "validator" {
-  rest_api_id           = aws_api_gateway_rest_api.attendance_api.id
-  name                  = "validate-request"
-  validate_request_body = true
-  validate_request_parameters = true
+  rest_api_id                  = aws_api_gateway_rest_api.attendance_api.id
+  name                         = "validate-request"
+  validate_request_body        = true
+  validate_request_parameters  = true
 }
 
 # POST /students
@@ -27,7 +27,6 @@ resource "aws_api_gateway_method" "post_students" {
   rest_api_id          = aws_api_gateway_rest_api.attendance_api.id
   resource_id          = aws_api_gateway_resource.students.id
   http_method          = "POST"
-  # CKV_AWS_59 / CKV2_AWS_53 - Autorización y validación
   authorization        = "COGNITO_USER_POOLS"
   authorizer_id        = aws_api_gateway_authorizer.cognito.id
   request_validator_id = aws_api_gateway_request_validator.validator.id
@@ -47,7 +46,6 @@ resource "aws_api_gateway_method" "get_students" {
   rest_api_id          = aws_api_gateway_rest_api.attendance_api.id
   resource_id          = aws_api_gateway_resource.students.id
   http_method          = "GET"
-  # CKV_AWS_59 / CKV2_AWS_53 - Autorización y validación
   authorization        = "COGNITO_USER_POOLS"
   authorizer_id        = aws_api_gateway_authorizer.cognito.id
   request_validator_id = aws_api_gateway_request_validator.validator.id
@@ -93,9 +91,9 @@ resource "aws_api_gateway_deployment" "attendance" {
 
 # Stage
 resource "aws_api_gateway_stage" "prod" {
-  stage_name    = "prod"
-  rest_api_id   = aws_api_gateway_rest_api.attendance_api.id
-  deployment_id = aws_api_gateway_deployment.attendance.id
+  stage_name           = "prod"
+  rest_api_id          = aws_api_gateway_rest_api.attendance_api.id
+  deployment_id        = aws_api_gateway_deployment.attendance.id
   xray_tracing_enabled = true
 
   # CKV2_AWS_51 - Certificado de cliente
@@ -115,7 +113,7 @@ resource "aws_api_gateway_client_certificate" "cert" {
   description = "Certificado de cliente para API Gateway"
 }
 
-# CKV2_AWS_4 - Logging level + CKV_AWS_120 / CKV_AWS_225 - Caching
+# CKV2_AWS_4 / CKV_AWS_120 / CKV_AWS_225 - Logging level y Caching
 resource "aws_api_gateway_method_settings" "all" {
   rest_api_id = aws_api_gateway_rest_api.attendance_api.id
   stage_name  = aws_api_gateway_stage.prod.stage_name
@@ -128,7 +126,10 @@ resource "aws_api_gateway_method_settings" "all" {
   }
 }
 
-# CKV2_AWS_29 - WAF
+# CKV2_AWS_29 - WAF con reglas
+# CKV_AWS_175 - WAF con reglas asociadas
+# CKV_AWS_192 - Regla Log4j
+# CKV2_AWS_31 - WAF logging
 resource "aws_wafv2_web_acl" "api_waf" {
   name  = "attendance-api-waf"
   scope = "REGIONAL"
@@ -137,11 +138,63 @@ resource "aws_wafv2_web_acl" "api_waf" {
     allow {}
   }
 
+  # CKV_AWS_192 - Protección Log4j
+  rule {
+    name     = "AWSManagedRulesKnownBadInputsRuleSet"
+    priority = 1
+
+    override_action {
+      none {}
+    }
+
+    statement {
+      managed_rule_group_statement {
+        name        = "AWSManagedRulesKnownBadInputsRuleSet"
+        vendor_name = "AWS"
+      }
+    }
+
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "AWSManagedRulesKnownBadInputsRuleSet"
+      sampled_requests_enabled   = true
+    }
+  }
+
+  # CKV_AWS_175 - Regla adicional
+  rule {
+    name     = "AWSManagedRulesCommonRuleSet"
+    priority = 2
+
+    override_action {
+      none {}
+    }
+
+    statement {
+      managed_rule_group_statement {
+        name        = "AWSManagedRulesCommonRuleSet"
+        vendor_name = "AWS"
+      }
+    }
+
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "AWSManagedRulesCommonRuleSet"
+      sampled_requests_enabled   = true
+    }
+  }
+
   visibility_config {
     cloudwatch_metrics_enabled = true
     metric_name                = "attendance-api-waf"
     sampled_requests_enabled   = true
   }
+}
+
+# CKV2_AWS_31 - WAF Logging
+resource "aws_wafv2_web_acl_logging_configuration" "waf_logging" {
+  log_destination_configs = [aws_cloudwatch_log_group.api_gateway_logs.arn]
+  resource_arn            = aws_wafv2_web_acl.api_waf.arn
 }
 
 # CKV_AWS_158 / CKV_AWS_338 - CloudWatch Log Group cifrado con KMS, retención 1 año
