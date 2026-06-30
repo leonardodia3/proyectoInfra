@@ -126,10 +126,7 @@ resource "aws_api_gateway_method_settings" "all" {
   }
 }
 
-# CKV2_AWS_29 - WAF con reglas
-# CKV_AWS_175 - WAF con reglas asociadas
-# CKV_AWS_192 - Regla Log4j
-# CKV2_AWS_31 - WAF logging
+# WAF con reglas
 resource "aws_wafv2_web_acl" "api_waf" {
   name  = "attendance-api-waf"
   scope = "REGIONAL"
@@ -138,7 +135,6 @@ resource "aws_wafv2_web_acl" "api_waf" {
     allow {}
   }
 
-  # CKV_AWS_192 - Protección Log4j
   rule {
     name     = "AWSManagedRulesKnownBadInputsRuleSet"
     priority = 1
@@ -161,7 +157,6 @@ resource "aws_wafv2_web_acl" "api_waf" {
     }
   }
 
-  # CKV_AWS_175 - Regla adicional
   rule {
     name     = "AWSManagedRulesCommonRuleSet"
     priority = 2
@@ -191,13 +186,19 @@ resource "aws_wafv2_web_acl" "api_waf" {
   }
 }
 
-# CKV2_AWS_31 - WAF Logging
+# WAF Logging
 resource "aws_wafv2_web_acl_logging_configuration" "waf_logging" {
   log_destination_configs = [aws_cloudwatch_log_group.api_gateway_logs.arn]
   resource_arn            = aws_wafv2_web_acl.api_waf.arn
 }
 
-# CKV_AWS_158 / CKV_AWS_338 - CloudWatch Log Group cifrado con KMS, retención 1 año
+# WAF Association con API Gateway
+resource "aws_wafv2_web_acl_association" "api_waf_association" {
+  resource_arn = aws_api_gateway_stage.prod.arn
+  web_acl_arn  = aws_wafv2_web_acl.api_waf.arn
+}
+
+# CloudWatch Log Group
 resource "aws_cloudwatch_log_group" "api_gateway_logs" {
   name              = "/aws/api-gateway/attendance-api"
   retention_in_days = 365
