@@ -1,1 +1,10 @@
-
+await db.put({
+   TableName:"attendance",
+   Item:{
+      pk:`STUDENT#${body.dni}`,
+      sk:"PROFILE",
+      name:body.name,
+      email:body.email,
+      classroom:body.classroom
+   }
+ }).promise()
