@@ -3,3 +3,4 @@ terraform/.terraform/
 build/
 *.tfstate
 *.tfstate.*
+node_modules/
