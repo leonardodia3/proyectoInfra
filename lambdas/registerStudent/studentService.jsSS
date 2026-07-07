@@ -1,10 +1,16 @@
-await db.put({
-   TableName:"attendance",
-   Item:{
-      pk:`STUDENT#${body.dni}`,
-      sk:"PROFILE",
-      name:body.name,
-      email:body.email,
-      classroom:body.classroom
-   }
- }).promise()
+async function registrarAlumno(body, db) {
+  await db.put({
+    TableName:"attendance",
+    Item:{
+       pk:`STUDENT#${body.dni}`,
+       sk:"PROFILE",
+       name:body.name,
+       email:body.email,
+       classroom:body.classroom
+    }
+  }).promise()
+
+  return { success: true }
+}
+
+module.exports = { registrarAlumno }
