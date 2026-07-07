@@ -5,28 +5,28 @@ data "archive_file" "register_student" {
   output_path = "../build/registerStudent.zip"
 }
 
-data "archive_file" "list_students" {
-  type        = "zip"
-  source_dir  = "../lambdas/listStudents"
-  output_path = "../build/listStudents.zip"
+resource "aws_lambda_function" "list_students" {
+  ...
+  code_signing_config_arn = aws_lambda_code_signing_config.list_students.arn
+  ...
 }
 
-data "archive_file" "attendance" {
-  type        = "zip"
-  source_dir  = "../lambdas/attendance"
-  output_path = "../build/attendance.zip"
+resource "aws_lambda_function" "attendance" {
+  ...
+  code_signing_config_arn = aws_lambda_code_signing_config.attendance.arn
+  ...
 }
 
-data "archive_file" "manual_attendance" {
-  type        = "zip"
-  source_dir  = "../lambdas/manualAttendance"
-  output_path = "../build/manualAttendance.zip"
+resource "aws_lambda_function" "manual_attendance" {
+  ...
+  code_signing_config_arn = aws_lambda_code_signing_config.manual_attendance.arn
+  ...
 }
 
-data "archive_file" "attendance_history" {
-  type        = "zip"
-  source_dir  = "../lambdas/attendanceHistory"
-  output_path = "../build/attendanceHistory.zip"
+resource "aws_lambda_function" "attendance_history" {
+  ...
+  code_signing_config_arn = aws_lambda_code_signing_config.attendance_history.arn
+  ...
 }
 
 # Lambdas
