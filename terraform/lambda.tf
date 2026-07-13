@@ -5,28 +5,28 @@ data "archive_file" "register_student" {
   output_path = "../build/registerStudent.zip"
 }
 
-resource "aws_lambda_function" "list_students" {
-  ...
-  code_signing_config_arn = aws_lambda_code_signing_config.list_students.arn
-  ...
+data "archive_file" "list_students" {
+  type        = "zip"
+  source_dir  = "../lambdas/listStudents"
+  output_path = "../build/listStudents.zip"
 }
 
-resource "aws_lambda_function" "attendance" {
-  ...
-  code_signing_config_arn = aws_lambda_code_signing_config.attendance.arn
-  ...
+data "archive_file" "attendance" {
+  type        = "zip"
+  source_dir  = "../lambdas/attendance"
+  output_path = "../build/attendance.zip"
 }
 
-resource "aws_lambda_function" "manual_attendance" {
-  ...
-  code_signing_config_arn = aws_lambda_code_signing_config.manual_attendance.arn
-  ...
+data "archive_file" "manual_attendance" {
+  type        = "zip"
+  source_dir  = "../lambdas/manualAttendance"
+  output_path = "../build/manualAttendance.zip"
 }
 
-resource "aws_lambda_function" "attendance_history" {
-  ...
-  code_signing_config_arn = aws_lambda_code_signing_config.attendance_history.arn
-  ...
+data "archive_file" "attendance_history" {
+  type        = "zip"
+  source_dir  = "../lambdas/attendanceHistory"
+  output_path = "../build/attendanceHistory.zip"
 }
 
 # Lambdas
@@ -40,17 +40,14 @@ resource "aws_lambda_function" "register_student" {
   code_signing_config_arn        = aws_lambda_code_signing_config.register_student.arn
   reserved_concurrent_executions = 1000
 
-  # CKV_AWS_50 - X-Ray tracing
   tracing_config {
     mode = "Active"
   }
 
-  # CKV_AWS_116 - Dead Letter Queue
   dead_letter_config {
     target_arn = aws_sqs_queue.tardanza_queue.arn
   }
 
-  # CKV_AWS_117 - VPC
   vpc_config {
     subnet_ids         = []
     security_group_ids = []
@@ -64,7 +61,7 @@ resource "aws_lambda_function" "list_students" {
   handler          = "index.handler"
   runtime          = "nodejs20.x"
   role             = aws_iam_role.lambda_role.arn
-  code_signing_config_arn        = aws_lambda_code_signing_config.register_student.arn
+  code_signing_config_arn        = aws_lambda_code_signing_config.list_students.arn
   reserved_concurrent_executions = 1000
 
   tracing_config {
@@ -88,7 +85,7 @@ resource "aws_lambda_function" "attendance" {
   handler          = "index.handler"
   runtime          = "nodejs20.x"
   role             = aws_iam_role.lambda_role.arn
-  code_signing_config_arn        = aws_lambda_code_signing_config.register_student.arn
+  code_signing_config_arn        = aws_lambda_code_signing_config.attendance.arn
   reserved_concurrent_executions = 1000
 
   tracing_config {
@@ -112,7 +109,7 @@ resource "aws_lambda_function" "manual_attendance" {
   handler          = "index.handler"
   runtime          = "nodejs20.x"
   role             = aws_iam_role.lambda_role.arn
-  code_signing_config_arn        = aws_lambda_code_signing_config.register_student.arn
+  code_signing_config_arn        = aws_lambda_code_signing_config.manual_attendance.arn
   reserved_concurrent_executions = 1000
 
   tracing_config {
@@ -136,7 +133,7 @@ resource "aws_lambda_function" "attendance_history" {
   handler          = "index.handler"
   runtime          = "nodejs20.x"
   role             = aws_iam_role.lambda_role.arn
-  code_signing_config_arn        = aws_lambda_code_signing_config.register_student.arn
+  code_signing_config_arn        = aws_lambda_code_signing_config.attendance_history.arn
   reserved_concurrent_executions = 1000
 
   tracing_config {
