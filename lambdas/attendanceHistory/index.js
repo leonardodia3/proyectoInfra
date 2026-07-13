@@ -1,31 +1,21 @@
-const AWS=require("aws-sdk")
+const AWS = require("aws-sdk")
+const db = new AWS.DynamoDB.DocumentClient()
+const { consultarHistorial } = require("./attendanceHistoryService")
 
-const db=new AWS.DynamoDB.DocumentClient()
+exports.handler = async (event) => {
+  const dni = event.pathParameters ? event.pathParameters.id : undefined
 
-exports.handler=async(event)=>{
+  const resultado = await consultarHistorial(dni, db)
 
- const dni=event.pathParameters.id
+  if (resultado.error) {
+    return {
+      statusCode: 400,
+      body: JSON.stringify({ message: resultado.error })
+    }
+  }
 
- const data=await db.query({
-
-   TableName:"attendance",
-
-   KeyConditionExpression:"pk=:pk",
-
-   ExpressionAttributeValues:{
-
-      ":pk":`STUDENT#${dni}`
-
-   }
-
- }).promise()
-
- return{
-
-   statusCode:200,
-
-   body:JSON.stringify(data.Items)
-
- }
-
+  return {
+    statusCode: 200,
+    body: JSON.stringify(resultado.historial)
+  }
 }

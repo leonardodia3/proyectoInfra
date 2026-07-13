@@ -1,21 +1,12 @@
-const AWS=require("aws-sdk")
+const AWS = require("aws-sdk")
+const db = new AWS.DynamoDB.DocumentClient()
+const { listarAlumnos } = require("./listStudentsService")
 
-const db=new AWS.DynamoDB.DocumentClient()
+exports.handler = async () => {
+  const resultado = await listarAlumnos(db)
 
-exports.handler=async()=>{
-
- const data=await db.scan({
-
-    TableName:"attendance"
-
- }).promise()
-
- return{
-
-   statusCode:200,
-
-   body:JSON.stringify(data.Items)
-
- }
-
+  return {
+    statusCode: 200,
+    body: JSON.stringify(resultado.alumnos)
+  }
 }

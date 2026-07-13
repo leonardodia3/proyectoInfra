@@ -1,35 +1,21 @@
-const AWS=require("aws-sdk")
+const AWS = require("aws-sdk")
+const db = new AWS.DynamoDB.DocumentClient()
+const { registrarAsistencia } = require("./attendanceService")
 
-const db=new AWS.DynamoDB.DocumentClient()
+exports.handler = async (event) => {
+  const body = JSON.parse(event.body)
 
-exports.handler=async(event)=>{
+  const resultado = await registrarAsistencia(body, db)
 
- const body=JSON.parse(event.body)
-
- await db.put({
-
-    TableName:"attendance",
-
-    Item:{
-
-      pk:`STUDENT#${body.dni}`,
-
-      sk:`ATTENDANCE#${Date.now()}`,
-
-      timestamp:new Date().toISOString(),
-
-      method:"RFID"
-
+  if (resultado.error) {
+    return {
+      statusCode: 400,
+      body: JSON.stringify({ message: resultado.error })
     }
+  }
 
- }).promise()
-
- return{
-
-    statusCode:200,
-
-    body:"ok"
-
- }
-
+  return {
+    statusCode: 200,
+    body: "ok"
+  }
 }

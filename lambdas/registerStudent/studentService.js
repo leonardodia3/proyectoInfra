@@ -2,6 +2,10 @@ function esDniValido(dni) {
   return dni.length === 8
 }
 
+function esDniSoloNumeros(dni) {
+  return /^\d+$/.test(dni)
+}
+
 function esCorreoValido(email) {
   return email.includes("@")
 }
@@ -15,12 +19,24 @@ async function registrarAlumno(body, db) {
     return { error: "DNI no es válido" }
   }
 
+  if (!esDniSoloNumeros(body.dni)) {
+    return { error: "El DNI debe contener solo números" }
+  }
+
   if (!body.email) {
     return { error: "El correo es obligatorio" }
   }
 
   if (!esCorreoValido(body.email)) {
     return { error: "El correo no es válido" }
+  }
+
+  if (!body.name) {
+    return { error: "El nombre es obligatorio" }
+  }
+
+  if (!body.classroom) {
+    return { error: "El salón es obligatorio" }
   }
 
   const existente = await db.get({

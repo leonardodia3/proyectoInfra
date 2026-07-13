@@ -1,35 +1,21 @@
-const AWS=require("aws-sdk")
+const AWS = require("aws-sdk")
+const db = new AWS.DynamoDB.DocumentClient()
+const { registrarAsistenciaManual } = require("./manualAttendanceService")
 
-const db=new AWS.DynamoDB.DocumentClient()
+exports.handler = async (event) => {
+  const body = JSON.parse(event.body)
 
-exports.handler=async(event)=>{
+  const resultado = await registrarAsistenciaManual(body, db)
 
- const body=JSON.parse(event.body)
-
- await db.put({
-
-    TableName:"attendance",
-
-    Item:{
-
-      pk:`STUDENT#${body.dni}`,
-
-      sk:`ATTENDANCE#${Date.now()}`,
-
-      timestamp:new Date().toISOString(),
-
-      method:"MANUAL"
-
+  if (resultado.error) {
+    return {
+      statusCode: 400,
+      body: JSON.stringify({ message: resultado.error })
     }
+  }
 
- }).promise()
-
- return{
-
-    statusCode:200,
-
-    body:"ok"
-
- }
-
+  return {
+    statusCode: 200,
+    body: "ok"
+  }
 }
