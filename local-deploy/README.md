@@ -1,0 +1,98 @@
+# Sistema de Asistencia — Entorno Local con Docker
+
+Este entorno te permite correr todo el sistema (base de datos, backend y frontend) en tu computadora, sin necesidad de desplegar en AWS ni tener credenciales reales.
+
+## Qué incluye
+
+- **dynamodb-local**: una versión de DynamoDB que corre en tu máquina (contenedor oficial de Amazon), en memoria.
+- **backend**: un servidor Express que reutiliza exactamente la misma lógica de negocio que ya probaste con Jest en tus 5 lambdas (`registrarAlumno`, `registrarAsistencia`, etc.), expuesta como endpoints REST normales.
+- **frontend**: un panel web simple (HTML/CSS/JS, sin frameworks) para registrar alumnos, marcar asistencia, ver el historial y listar alumnos.
+
+## Qué NO se simula (limitación conocida)
+
+- **Cognito** (autenticación): el panel local no pide login, cualquiera puede usarlo. Es solo para probar la lógica de negocio.
+- **SNS real**: las notificaciones no se envían por correo real. En su lugar, el backend las imprime en su propia consola con el prefijo `📧 [SNS simulado]`.
+- **SQS / alertas de tardanza**: no está implementado en este entorno local, ya que depende del flujo asíncrono real de AWS.
+
+Estas 3 cosas sí existen y están correctamente configuradas en tu Terraform para cuando despliegues a AWS real — este entorno local es solo para probar rápido la lógica de negocio sin desplegar.
+
+## Requisitos
+
+- Tener [Docker Desktop](https://www.docker.com/products/docker-desktop/) instalado y corriendo en tu computadora.
+
+## Cómo levantar todo
+
+Desde esta carpeta (`local-deploy`), corre:
+
+```bash
+docker compose up --build
+```
+
+Esto va a:
+1. Descargar e iniciar DynamoDB local (puerto 8000)
+2. Construir e iniciar el backend (puerto 3000)
+3. Construir e iniciar el frontend (puerto 8080)
+
+Espera a que la terminal muestre `Backend escuchando en el puerto 3000` antes de continuar.
+
+## Cargar datos de prueba
+
+**En una segunda terminal** (deja la anterior corriendo), ejecuta:
+
+```bash
+docker compose exec backend npm run seed
+```
+
+Esto crea la tabla `attendance` en DynamoDB local y carga:
+- 3 alumnos de prueba (Juan Pérez, Ana Torres, Luis Ramírez)
+- 2 registros de asistencia de ejemplo para Juan Pérez
+
+## Usar el sistema
+
+Abre tu navegador en:
+
+```
+http://localhost:8080
+```
+
+Desde ahí puedes:
+- Registrar un alumno nuevo
+- Ver la lista de alumnos (botón "Actualizar lista")
+- Marcar asistencia (RFID simulado o manual) usando el DNI `12345678` (Juan) como prueba
+- Consultar el historial de asistencia de ese mismo DNI
+
+## Probar la API directamente (sin el frontend)
+
+Con curl o Postman, apuntando a `http://localhost:3000`:
+
+```bash
+# Registrar alumno
+curl -X POST http://localhost:3000/students \
+  -H "Content-Type: application/json" \
+  -d '{"dni":"99999999","name":"Prueba Test","email":"prueba@correo.com","classroom":"1ro A"}'
+
+# Listar alumnos
+curl http://localhost:3000/students
+
+# Marcar asistencia
+curl -X POST http://localhost:3000/attendance \
+  -H "Content-Type: application/json" \
+  -d '{"dni":"12345678"}'
+
+# Historial de un alumno
+curl http://localhost:3000/attendance/history/12345678
+```
+
+## Apagar todo
+
+```bash
+docker compose down
+```
+
+Como DynamoDB local corre `-inMemory`, al apagar el contenedor **se pierden los datos** (tendrás que correr el seed de nuevo la próxima vez que levantes todo). Si quieres que los datos persistan entre reinicios, dime y te muestro cómo agregar un volumen.
+
+## Solución de problemas comunes
+
+- **"Cannot connect to the Docker daemon"** → Abre Docker Desktop y espera a que termine de iniciar antes de correr el comando.
+- **Puerto ocupado (3000, 8000 u 8080)** → Cierra cualquier otro programa usando esos puertos, o cambia el puerto en `docker-compose.yml` (por ejemplo `"3001:3000"`).
+- **El frontend no carga los alumnos** → Verifica en la consola del navegador (F12) si hay errores de conexión; confirma que el backend esté corriendo con `docker compose ps`.

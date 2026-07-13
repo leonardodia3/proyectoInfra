@@ -35,3 +35,5 @@ El director puede registrar alumnos nuevos, listar alumnos y consultar el histor
 | `attendanceHistory` | GET | `/api/asistencias/alumno` | Consulta historial de asistencia de un alumno |
 
 ## Estructura del proyecto
+
+

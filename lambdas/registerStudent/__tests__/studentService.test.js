@@ -63,3 +63,7 @@ test("rechaza salón vacío", async () => {
   const resultado = await registrarAlumno({ dni: "12345678", email: "a@a.com", name: "Juan", classroom: "" }, {})
   expect(resultado.error).toBe("El salón es obligatorio")
 })
+test("rechaza correo con dominio incompleto", async () => {
+  const resultado = await registrarAlumno({ dni: "12345678", email: "leonardo@gmail.c" }, {})
+  expect(resultado.error).toBe("El correo no es válido")
+})

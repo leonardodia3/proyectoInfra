@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Control de Asistencia — Panel Local</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <span class="dot"></span>
+    <h1>Control de Asistencia</h1>
+    <span class="env-badge">entorno local</span>
+  </div>
+</header>
+
+<main class="layout">
+
+  <section class="panel" id="panel-registrar">
+    <h2>Registrar alumno</h2>
+    <form id="form-registrar">
+     <label>DNI
+  <input type="text" name="dni" placeholder="12345678" required maxlength="8" inputmode="numeric" pattern="[0-9]{8}">
+</label>
+      <label>Nombre completo
+        <input type="text" name="name" placeholder="Juan Pérez" required>
+      </label>
+      <label>Correo del tutor
+        <input type="email" name="email" placeholder="tutor@correo.com" required>
+      </label>
+      <label>Salón
+        <input type="text" name="classroom" placeholder="5to C" required>
+      </label>
+      <button type="submit">Registrar</button>
+    </form>
+    <p class="feedback" id="feedback-registrar"></p>
+  </section>
+
+  <section class="panel" id="panel-asistencia">
+    <h2>Marcar asistencia</h2>
+    <form id="form-asistencia">
+      <label>DNI del alumno
+        <input type="text" name="dni" placeholder="12345678" required>
+      </label>
+      <div class="button-row">
+        <button type="submit" data-method="rfid">Simular RFID</button>
+        <button type="submit" data-method="manual" class="secondary">Registrar manual</button>
+      </div>
+    </form>
+    <p class="feedback" id="feedback-asistencia"></p>
+  </section>
+
+  <section class="panel" id="panel-historial">
+    <h2>Historial de asistencia</h2>
+    <form id="form-historial">
+      <label>DNI del alumno
+        <input type="text" name="dni" placeholder="12345678" required>
+      </label>
+      <button type="submit">Consultar</button>
+    </form>
+    <ul class="history-list" id="lista-historial"></ul>
+  </section>
+
+  <section class="panel panel-wide" id="panel-alumnos">
+    <h2>Alumnos registrados</h2>
+    <button id="btn-refrescar" class="secondary">Actualizar lista</button>
+    <table class="students-table">
+      <thead>
+        <tr><th>DNI</th><th>Nombre</th><th>Correo</th><th>Salón</th></tr>
+      </thead>
+      <tbody id="tabla-alumnos"></tbody>
+    </table>
+  </section>
+
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>
