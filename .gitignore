@@ -3,4 +3,5 @@ terraform/.terraform/
 build/
 *.tfstate
 *.tfstate.*
-node_modules/
+**/node_modules/
+terraform/plan_resultado.txt

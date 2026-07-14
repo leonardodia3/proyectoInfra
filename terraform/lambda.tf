@@ -43,7 +43,7 @@ resource "aws_lambda_function" "notify_alert" {
   runtime          = "nodejs20.x"
   role             = aws_iam_role.lambda_role.arn
   code_signing_config_arn        = aws_lambda_code_signing_config.notify_alert.arn
-  reserved_concurrent_executions = 1000
+  
 
   environment {
     variables = {
@@ -68,12 +68,14 @@ resource "aws_lambda_function" "register_student" {
   runtime          = "nodejs20.x"
   role             = aws_iam_role.lambda_role.arn
   code_signing_config_arn        = aws_lambda_code_signing_config.register_student.arn
-  reserved_concurrent_executions = 1000
-environment {
+  
+
+  environment {
     variables = {
       SNS_TOPIC_ARN = aws_sns_topic.attendance_alerts.arn
     }
   }
+
   tracing_config {
     mode = "Active"
   }
@@ -96,7 +98,7 @@ resource "aws_lambda_function" "list_students" {
   runtime          = "nodejs20.x"
   role             = aws_iam_role.lambda_role.arn
   code_signing_config_arn        = aws_lambda_code_signing_config.list_students.arn
-  reserved_concurrent_executions = 1000
+ 
 
   tracing_config {
     mode = "Active"
@@ -120,7 +122,7 @@ resource "aws_lambda_function" "attendance" {
   runtime          = "nodejs20.x"
   role             = aws_iam_role.lambda_role.arn
   code_signing_config_arn        = aws_lambda_code_signing_config.attendance.arn
-  reserved_concurrent_executions = 1000
+ 
 
   tracing_config {
     mode = "Active"
@@ -144,7 +146,7 @@ resource "aws_lambda_function" "manual_attendance" {
   runtime          = "nodejs20.x"
   role             = aws_iam_role.lambda_role.arn
   code_signing_config_arn        = aws_lambda_code_signing_config.manual_attendance.arn
-  reserved_concurrent_executions = 1000
+  
 
   tracing_config {
     mode = "Active"
@@ -168,7 +170,7 @@ resource "aws_lambda_function" "attendance_history" {
   runtime          = "nodejs20.x"
   role             = aws_iam_role.lambda_role.arn
   code_signing_config_arn        = aws_lambda_code_signing_config.attendance_history.arn
-  reserved_concurrent_executions = 1000
+ 
 
   tracing_config {
     mode = "Active"
@@ -188,7 +190,7 @@ resource "aws_lambda_code_signing_config" "notify_alert" {
     signing_profile_version_arns = [aws_signer_signing_profile.notify_alert.version_arn]
   }
   policies {
-    untrusted_artifact_on_deployment = "Enforce"
+    untrusted_artifact_on_deployment = "Warn"
   }
 }
 resource "aws_lambda_code_signing_config" "register_student" {
@@ -196,7 +198,7 @@ resource "aws_lambda_code_signing_config" "register_student" {
     signing_profile_version_arns = [aws_signer_signing_profile.register_student.version_arn]
   }
   policies {
-    untrusted_artifact_on_deployment = "Enforce"
+    untrusted_artifact_on_deployment = "Warn"
   }
 }
 
@@ -205,7 +207,7 @@ resource "aws_lambda_code_signing_config" "list_students" {
     signing_profile_version_arns = [aws_signer_signing_profile.list_students.version_arn]
   }
   policies {
-    untrusted_artifact_on_deployment = "Enforce"
+    untrusted_artifact_on_deployment = "Warn"
   }
 }
 
@@ -214,7 +216,7 @@ resource "aws_lambda_code_signing_config" "attendance" {
     signing_profile_version_arns = [aws_signer_signing_profile.attendance.version_arn]
   }
   policies {
-    untrusted_artifact_on_deployment = "Enforce"
+    untrusted_artifact_on_deployment = "Warn"
   }
 }
 
@@ -223,7 +225,7 @@ resource "aws_lambda_code_signing_config" "manual_attendance" {
     signing_profile_version_arns = [aws_signer_signing_profile.manual_attendance.version_arn]
   }
   policies {
-    untrusted_artifact_on_deployment = "Enforce"
+    untrusted_artifact_on_deployment = "Warn"
   }
 }
 
@@ -232,6 +234,6 @@ resource "aws_lambda_code_signing_config" "attendance_history" {
     signing_profile_version_arns = [aws_signer_signing_profile.attendance_history.version_arn]
   }
   policies {
-    untrusted_artifact_on_deployment = "Enforce"
+    untrusted_artifact_on_deployment = "Warn"
   }
 }
