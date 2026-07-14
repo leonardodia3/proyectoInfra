@@ -202,16 +202,48 @@ resource "aws_api_gateway_usage_plan_key" "esp32_key_link" {
   key_type      = "API_KEY"
   usage_plan_id = aws_api_gateway_usage_plan.esp32_plan.id
 }
+# Recurso /students/{dni}
+resource "aws_api_gateway_resource" "students_dni" {
+  rest_api_id = aws_api_gateway_rest_api.attendance_api.id
+  parent_id   = aws_api_gateway_resource.students.id
+  path_part   = "{dni}"
+}
 
+# DELETE /students/{dni} (solo Director, con Cognito)
+resource "aws_api_gateway_method" "delete_student" {
+  rest_api_id   = aws_api_gateway_rest_api.attendance_api.id
+  resource_id   = aws_api_gateway_resource.students_dni.id
+  http_method   = "DELETE"
+  authorization = "COGNITO_USER_POOLS"
+  authorizer_id = aws_api_gateway_authorizer.cognito.id
+}
+
+resource "aws_api_gateway_integration" "delete_student" {
+  rest_api_id             = aws_api_gateway_rest_api.attendance_api.id
+  resource_id             = aws_api_gateway_resource.students_dni.id
+  http_method             = aws_api_gateway_method.delete_student.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = aws_lambda_function.register_student.invoke_arn
+}
+
+resource "aws_lambda_permission" "delete_student" {
+  statement_id  = "AllowApiGatewayInvokeDelete"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.register_student.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_api_gateway_rest_api.attendance_api.execution_arn}/*/*"
+}
 # ===== Deployment (UN SOLO bloque, con todas las integraciones) =====
 resource "aws_api_gateway_deployment" "attendance" {
   rest_api_id = aws_api_gateway_rest_api.attendance_api.id
-  depends_on = [
+depends_on = [
     aws_api_gateway_integration.register_student,
     aws_api_gateway_integration.list_students,
     aws_api_gateway_integration.attendance,
     aws_api_gateway_integration.manual_attendance,
-    aws_api_gateway_integration.attendance_history
+    aws_api_gateway_integration.attendance_history,
+    aws_api_gateway_integration.delete_student
   ]
   lifecycle {
     create_before_destroy = true

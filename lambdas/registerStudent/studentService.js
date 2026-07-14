@@ -65,4 +65,26 @@ async function registrarAlumno(body, db) {
   return { success: true }
 }
 
-module.exports = { registrarAlumno }
+async function eliminarAlumno(dni, db) {
+  if (!dni) {
+    return { error: "DNI es obligatorio" }
+  }
+
+  const alumno = await db.get({
+    TableName: "attendance",
+    Key: { pk: `STUDENT#${dni}`, sk: "PROFILE" }
+  }).promise()
+
+  if (!alumno.Item) {
+    return { error: "El alumno no existe" }
+  }
+
+  await db.delete({
+    TableName: "attendance",
+    Key: { pk: `STUDENT#${dni}`, sk: "PROFILE" }
+  }).promise()
+
+  return { success: true }
+}
+
+module.exports = { registrarAlumno, eliminarAlumno }

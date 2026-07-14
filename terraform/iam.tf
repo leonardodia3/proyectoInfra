@@ -26,12 +26,13 @@ resource "aws_iam_role_policy" "lambda_dynamodb_policy" {
     Statement = [
       {
         Effect = "Allow"
-       Action = [
+Action = [
           "dynamodb:PutItem",
           "dynamodb:UpdateItem",
           "dynamodb:GetItem",
           "dynamodb:Query",
-          "dynamodb:Scan"
+          "dynamodb:Scan",
+          "dynamodb:DeleteItem"
         ]
         Resource = "arn:aws:dynamodb:us-east-1:${data.aws_caller_identity.current.account_id}:table/attendance"
       }

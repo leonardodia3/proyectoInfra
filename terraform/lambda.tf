@@ -1,4 +1,9 @@
 # Empaquetar Lambdas
+data "archive_file" "notify_alert" {
+  type        = "zip"
+  source_dir  = "../lambdas/notifyAlert"
+  output_path = "../build/notifyAlert.zip"
+}
 data "archive_file" "register_student" {
   type        = "zip"
   source_dir  = "../lambdas/registerStudent"
@@ -30,6 +35,31 @@ data "archive_file" "attendance_history" {
 }
 
 # Lambdas
+resource "aws_lambda_function" "notify_alert" {
+  filename         = data.archive_file.notify_alert.output_path
+  source_code_hash = data.archive_file.notify_alert.output_base64sha256
+  function_name    = "notifyAlert"
+  handler          = "index.handler"
+  runtime          = "nodejs20.x"
+  role             = aws_iam_role.lambda_role.arn
+  code_signing_config_arn        = aws_lambda_code_signing_config.notify_alert.arn
+  reserved_concurrent_executions = 1000
+
+  environment {
+    variables = {
+      SNS_TOPIC_ARN = aws_sns_topic.attendance_alerts.arn
+    }
+  }
+
+  tracing_config {
+    mode = "Active"
+  }
+
+  vpc_config {
+    subnet_ids         = []
+    security_group_ids = []
+  }
+}
 resource "aws_lambda_function" "register_student" {
   filename         = data.archive_file.register_student.output_path
   source_code_hash = data.archive_file.register_student.output_base64sha256
@@ -149,7 +179,14 @@ resource "aws_lambda_function" "attendance_history" {
     security_group_ids = []
   }
 }
-
+resource "aws_lambda_code_signing_config" "notify_alert" {
+  allowed_publishers {
+    signing_profile_version_arns = [aws_signer_signing_profile.notify_alert.version_arn]
+  }
+  policies {
+    untrusted_artifact_on_deployment = "Enforce"
+  }
+}
 resource "aws_lambda_code_signing_config" "register_student" {
   allowed_publishers {
     signing_profile_version_arns = [aws_signer_signing_profile.register_student.version_arn]

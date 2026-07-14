@@ -31,6 +31,6 @@ resource "aws_iam_role_policy" "lambda_sqs_policy" {
 # Trigger: SQS activa Lambda notificador de alertas
 resource "aws_lambda_event_source_mapping" "sqs_to_notificador" {
   event_source_arn = aws_sqs_queue.tardanza_queue.arn
-  function_name    = aws_lambda_function.attendance.arn
+  function_name    = aws_lambda_function.notify_alert.arn
   batch_size       = 1
 }

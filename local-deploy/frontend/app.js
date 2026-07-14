@@ -97,27 +97,54 @@ document.getElementById("form-historial").addEventListener("submit", async (e) =
 // Listar alumnos
 async function cargarAlumnos() {
   const tbody = document.getElementById("tabla-alumnos")
-  tbody.innerHTML = "<tr><td colspan='4'>Cargando...</td></tr>"
+  tbody.innerHTML = "<tr><td colspan='5'>Cargando...</td></tr>"
 
   try {
     const res = await fetch(`${API_URL}/students`)
     const alumnos = await res.json()
 
     if (alumnos.length === 0) {
-      tbody.innerHTML = "<tr><td colspan='4'>No hay alumnos registrados todavía</td></tr>"
+      tbody.innerHTML = "<tr><td colspan='5'>No hay alumnos registrados todavía</td></tr>"
       return
     }
 
-    tbody.innerHTML = alumnos.map(a => `
+    tbody.innerHTML = alumnos.map(a => {
+      const dni = a.pk.replace("STUDENT#", "")
+      return `
       <tr>
-        <td>${a.pk.replace("STUDENT#", "")}</td>
+        <td>${dni}</td>
         <td>${a.name}</td>
         <td>${a.email}</td>
         <td>${a.classroom}</td>
+        <td><button class="secondary btn-eliminar" data-dni="${dni}">Eliminar</button></td>
       </tr>
-    `).join("")
+    `
+    }).join("")
+
+    document.querySelectorAll(".btn-eliminar").forEach(btn => {
+      btn.addEventListener("click", () => eliminarAlumno(btn.dataset.dni))
+    })
   } catch (err) {
-    tbody.innerHTML = "<tr><td colspan='4'>No se pudo conectar con el backend</td></tr>"
+    tbody.innerHTML = "<tr><td colspan='5'>No se pudo conectar con el backend</td></tr>"
+  }
+}
+
+async function eliminarAlumno(dni) {
+  const confirmado = confirm(`¿Seguro que quieres eliminar al alumno con DNI ${dni}? Su historial de asistencia se conservará.`)
+  if (!confirmado) return
+
+  try {
+    const res = await fetch(`${API_URL}/students/${dni}`, { method: "DELETE" })
+    const data = await res.json()
+
+    if (!res.ok) {
+      alert(data.message)
+      return
+    }
+
+    cargarAlumnos()
+  } catch (err) {
+    alert("No se pudo conectar con el backend")
   }
 }
 

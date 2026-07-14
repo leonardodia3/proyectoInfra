@@ -1,4 +1,4 @@
-const { registrarAlumno } = require("../studentService")
+const { registrarAlumno, eliminarAlumno } = require("../studentService")
 
 test("rechaza DNI vacio", async () => {
   const resultado = await registrarAlumno({ dni: "", email: "a@a.com" }, {})
@@ -63,7 +63,36 @@ test("rechaza salón vacío", async () => {
   const resultado = await registrarAlumno({ dni: "12345678", email: "a@a.com", name: "Juan", classroom: "" }, {})
   expect(resultado.error).toBe("El salón es obligatorio")
 })
+
 test("rechaza correo con dominio incompleto", async () => {
   const resultado = await registrarAlumno({ dni: "12345678", email: "leonardo@gmail.c" }, {})
   expect(resultado.error).toBe("El correo no es válido")
+})
+
+test("rechaza eliminar sin DNI", async () => {
+  const resultado = await eliminarAlumno("", {})
+  expect(resultado.error).toBe("DNI es obligatorio")
+})
+
+test("rechaza eliminar un alumno que no existe", async () => {
+  const dbFalso = {
+    get: jest.fn().mockReturnValue({
+      promise: () => Promise.resolve({ Item: undefined })
+    })
+  }
+  const resultado = await eliminarAlumno("12345678", dbFalso)
+  expect(resultado.error).toBe("El alumno no existe")
+})
+
+test("elimina correctamente el perfil de un alumno existente", async () => {
+  const dbFalso = {
+    get: jest.fn().mockReturnValue({
+      promise: () => Promise.resolve({ Item: { pk: "STUDENT#12345678", sk: "PROFILE" } })
+    }),
+    delete: jest.fn().mockReturnValue({
+      promise: () => Promise.resolve({})
+    })
+  }
+  const resultado = await eliminarAlumno("12345678", dbFalso)
+  expect(resultado.success).toBe(true)
 })

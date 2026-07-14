@@ -91,6 +91,35 @@ docker compose down
 
 Como DynamoDB local corre `-inMemory`, al apagar el contenedor **se pierden los datos** (tendrás que correr el seed de nuevo la próxima vez que levantes todo). Si quieres que los datos persistan entre reinicios, dime y te muestro cómo agregar un volumen.
 
+## Monitoreo con Prometheus y Grafana
+
+El backend expone sus propias métricas en `http://localhost:3000/metrics` (formato Prometheus), incluyendo:
+
+- **`attendance_http_requests_total`**: cuántas peticiones recibió cada endpoint, y con qué código de respuesta (para medir tasa de errores).
+- **`attendance_http_request_duration_seconds`**: cuánto tarda cada endpoint en responder (para medir latencia p95).
+- **`attendance_registered_total`**: cuántas asistencias se registraron, separadas por método (RFID vs manual) — una métrica propia del negocio, no solo técnica.
+- Métricas por defecto de Node.js (memoria, CPU, event loop).
+
+**Prometheus** (puerto 9090) hace scraping de ese endpoint cada 5 segundos. Accede en:
+```
+http://localhost:9090
+```
+Ahí puedes escribir consultas directas, por ejemplo `attendance_registered_total` o `rate(attendance_http_requests_total[1m])`.
+
+**Grafana** (puerto 3001) ya viene con Prometheus conectado como fuente de datos y un dashboard pre-cargado, sin que tengas que configurar nada a mano. Accede en:
+```
+http://localhost:3001
+```
+Usuario: `admin` — Contraseña: `admin` (o entra directo sin login, el acceso anónimo de solo lectura está habilitado). Busca el dashboard llamado **"Sistema de Asistencia — Backend"**.
+
+El dashboard muestra: peticiones por segundo por endpoint, tasa de errores, latencia p95, asistencias registradas por método, uso de memoria, y total de peticiones en 24h.
+
+**Para ver datos en el dashboard**, usa el panel del frontend (`localhost:8080`) para registrar alumnos y marcar asistencias — cada acción queda reflejada en Grafana en segundos.
+
+### Nota sobre el alcance de esta implementación
+
+Esto mide tu **backend local** (que reutiliza la misma lógica que tus lambdas). En un despliegue real a AWS, el monitoreo nativo lo da CloudWatch (que ya tienes configurado en tu Terraform: logs, X-Ray, alarmas). Grafana también puede conectarse directamente a CloudWatch como fuente de datos adicional si quieres un panel unificado — pregúntame si quieres que armemos eso también.
+
 ## Solución de problemas comunes
 
 - **"Cannot connect to the Docker daemon"** → Abre Docker Desktop y espera a que termine de iniciar antes de correr el comando.

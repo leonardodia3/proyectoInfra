@@ -22,3 +22,7 @@ resource "aws_signer_signing_profile" "attendance_history" {
   platform_id = "AWSLambda-SHA384-ECDSA"
   name        = "attendance_history_profile"
 }
+resource "aws_signer_signing_profile" "notify_alert" {
+  platform_id = "AWSLambda-SHA384-ECDSA"
+  name        = "notify_alert_profile"
+}
