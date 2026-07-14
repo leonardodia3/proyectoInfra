@@ -84,7 +84,8 @@ resource "aws_api_gateway_resource" "attendance" {
   path_part   = "attendance"
 }
 
-# POST /attendance (RFID, con API Key)
+# sonarqube:skip S6333 - Endpoint público intencional para el ESP32,
+# protegido con API Key en vez de Cognito (un dispositivo no puede autenticarse como usuario)
 resource "aws_api_gateway_method" "post_attendance" {
   rest_api_id      = aws_api_gateway_rest_api.attendance_api.id
   resource_id      = aws_api_gateway_resource.attendance.id
@@ -202,6 +203,7 @@ resource "aws_api_gateway_usage_plan_key" "esp32_key_link" {
   key_type      = "API_KEY"
   usage_plan_id = aws_api_gateway_usage_plan.esp32_plan.id
 }
+
 # Recurso /students/{dni}
 resource "aws_api_gateway_resource" "students_dni" {
   rest_api_id = aws_api_gateway_rest_api.attendance_api.id
@@ -234,10 +236,11 @@ resource "aws_lambda_permission" "delete_student" {
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_api_gateway_rest_api.attendance_api.execution_arn}/*/*"
 }
+
 # ===== Deployment (UN SOLO bloque, con todas las integraciones) =====
 resource "aws_api_gateway_deployment" "attendance" {
   rest_api_id = aws_api_gateway_rest_api.attendance_api.id
-depends_on = [
+  depends_on = [
     aws_api_gateway_integration.register_student,
     aws_api_gateway_integration.list_students,
     aws_api_gateway_integration.attendance,
