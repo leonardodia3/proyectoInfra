@@ -69,7 +69,11 @@ resource "aws_lambda_function" "register_student" {
   role             = aws_iam_role.lambda_role.arn
   code_signing_config_arn        = aws_lambda_code_signing_config.register_student.arn
   reserved_concurrent_executions = 1000
-
+environment {
+    variables = {
+      SNS_TOPIC_ARN = aws_sns_topic.attendance_alerts.arn
+    }
+  }
   tracing_config {
     mode = "Active"
   }

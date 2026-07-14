@@ -40,8 +40,8 @@ document.getElementById("form-registrar").addEventListener("submit", async (e) =
     }
   } catch (err) {
     mostrarFeedback("feedback-registrar", "No se pudo conectar con el backend", false)
-  }
-})
+  
+}
 
 // Marcar asistencia (RFID o manual, según el botón presionado)
 document.getElementById("form-asistencia").addEventListener("submit", async (e) => {
