@@ -10,39 +10,112 @@ function esCorreoValido(email) {
   return /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/.test(email)
 }
 
-async function registrarAlumno(body, db) {
-  if (!body.dni) {
+function normalizarTexto(valor) {
+  return typeof valor === "string" ? valor.trim() : valor
+}
+
+function valorPreferido(...valores) {
+  for (const valor of valores) {
+    const normalizado = normalizarTexto(valor)
+    if (normalizado) {
+      return normalizado
+    }
+  }
+
+  return ""
+}
+
+function normalizarAlumno(body) {
+  const dni = valorPreferido(body.dni)
+
+  return {
+    dni,
+    email: valorPreferido(body.email, body.correo),
+    name: valorPreferido(body.name, body.nombre),
+    classroom: valorPreferido(body.classroom, body.seccion, body.salon),
+    rfid: valorPreferido(body.rfid)
+  }
+}
+
+function extraerDniDesdePerfil(alumno) {
+  if (!alumno || !alumno.pk || !alumno.pk.startsWith("STUDENT#")) {
+    return undefined
+  }
+
+  return alumno.pk.replace("STUDENT#", "")
+}
+
+async function buscarAlumnoPorRfid(rfid, db, tableName, options) {
+  const rfidIndexName = options.rfidIndexName || process.env.RFID_INDEX_NAME
+
+  if (rfidIndexName) {
+    const resultado = await db.query({
+      TableName: tableName,
+      IndexName: rfidIndexName,
+      KeyConditionExpression: "rfid = :rfid",
+      FilterExpression: "sk = :profile",
+      ExpressionAttributeValues: {
+        ":rfid": rfid,
+        ":profile": "PROFILE"
+      },
+      Limit: 1
+    }).promise()
+
+    return resultado.Items ? resultado.Items[0] : undefined
+  }
+
+  const resultado = await db.scan({
+    TableName: tableName,
+    FilterExpression: "sk = :profile AND rfid = :rfid",
+    ExpressionAttributeValues: {
+      ":profile": "PROFILE",
+      ":rfid": rfid
+    }
+  }).promise()
+
+  return resultado.Items ? resultado.Items[0] : undefined
+}
+
+async function registrarAlumno(body, db, options = {}) {
+  const tableName = options.tableName || process.env.TABLE_NAME || "attendance"
+  const alumno = normalizarAlumno(body)
+
+  if (!alumno.dni) {
     return { error: "DNI es obligatorio" }
   }
 
-  if (!esDniValido(body.dni)) {
+  if (!esDniValido(alumno.dni)) {
     return { error: "DNI no es válido" }
   }
 
-  if (!esDniSoloNumeros(body.dni)) {
+  if (!esDniSoloNumeros(alumno.dni)) {
     return { error: "El DNI debe contener solo números" }
   }
 
-  if (!body.email) {
+  if (!alumno.email) {
     return { error: "El correo es obligatorio" }
   }
 
-  if (!esCorreoValido(body.email)) {
+  if (!esCorreoValido(alumno.email)) {
     return { error: "El correo no es válido" }
   }
 
-  if (!body.name) {
+  if (!alumno.name) {
     return { error: "El nombre es obligatorio" }
   }
 
-  if (!body.classroom) {
+  if (!alumno.classroom) {
     return { error: "El salón es obligatorio" }
   }
 
+  if (!alumno.rfid) {
+    return { error: "RFID es obligatorio" }
+  }
+
   const existente = await db.get({
-    TableName: "attendance",
+    TableName: tableName,
     Key: {
-      pk: `STUDENT#${body.dni}`,
+      pk: `STUDENT#${alumno.dni}`,
       sk: "PROFILE"
     }
   }).promise()
@@ -51,27 +124,35 @@ async function registrarAlumno(body, db) {
     return { error: "El DNI ya está registrado" }
   }
 
+  const rfidExistente = await buscarAlumnoPorRfid(alumno.rfid, db, tableName, options)
+  if (rfidExistente && extraerDniDesdePerfil(rfidExistente) !== alumno.dni) {
+    return { error: "El RFID ya está registrado" }
+  }
+
   await db.put({
-    TableName: "attendance",
+    TableName: tableName,
     Item: {
-      pk: `STUDENT#${body.dni}`,
+      pk: `STUDENT#${alumno.dni}`,
       sk: "PROFILE",
-      name: body.name,
-      email: body.email,
-      classroom: body.classroom
+      name: alumno.name,
+      email: alumno.email,
+      classroom: alumno.classroom,
+      rfid: alumno.rfid
     }
   }).promise()
 
-  return { success: true }
+  return { success: true, alumno }
 }
 
-async function eliminarAlumno(dni, db) {
+async function eliminarAlumno(dni, db, options = {}) {
+  const tableName = options.tableName || process.env.TABLE_NAME || "attendance"
+
   if (!dni) {
     return { error: "DNI es obligatorio" }
   }
 
   const alumno = await db.get({
-    TableName: "attendance",
+    TableName: tableName,
     Key: { pk: `STUDENT#${dni}`, sk: "PROFILE" }
   }).promise()
 
@@ -80,7 +161,7 @@ async function eliminarAlumno(dni, db) {
   }
 
   await db.delete({
-    TableName: "attendance",
+    TableName: tableName,
     Key: { pk: `STUDENT#${dni}`, sk: "PROFILE" }
   }).promise()
 

@@ -5,16 +5,16 @@ Este entorno te permite correr todo el sistema (base de datos, backend y fronten
 ## Qué incluye
 
 - **dynamodb-local**: una versión de DynamoDB que corre en tu máquina (contenedor oficial de Amazon), en memoria.
-- **backend**: un servidor Express que reutiliza exactamente la misma lógica de negocio que ya probaste con Jest en tus 5 lambdas (`registrarAlumno`, `registrarAsistencia`, etc.), expuesta como endpoints REST normales.
-- **frontend**: un panel web simple (HTML/CSS/JS, sin frameworks) para registrar alumnos, marcar asistencia, ver el historial y listar alumnos.
+- **backend**: un servidor Express que reutiliza la misma lógica de negocio de las Lambdas (`registrarAlumno`, `registrarAsistencia`, `procesarAlertaTardanza`, etc.), expuesta como endpoints REST normales.
+- **frontend**: un panel web simple (HTML/CSS/JS, sin frameworks) para registrar alumnos, marcar asistencia, ver el historial, listar alumnos y eliminar perfiles.
 
 ## Qué NO se simula (limitación conocida)
 
 - **Cognito** (autenticación): el panel local no pide login, cualquiera puede usarlo. Es solo para probar la lógica de negocio.
-- **SNS real**: las notificaciones no se envían por correo real. En su lugar, el backend las imprime en su propia consola con el prefijo `📧 [SNS simulado]`.
-- **SQS / alertas de tardanza**: no está implementado en este entorno local, ya que depende del flujo asíncrono real de AWS.
+- **SNS real**: las notificaciones no se envían por correo real. En su lugar, el backend las imprime en su propia consola con el prefijo `[SNS simulado]`.
+- **SQS real**: no se conecta a AWS. El backend simula el envío a la cola y procesa la alerta en memoria para que puedas ver el flujo completo en local.
 
-Estas 3 cosas sí existen y están correctamente configuradas en tu Terraform para cuando despliegues a AWS real — este entorno local es solo para probar rápido la lógica de negocio sin desplegar.
+Estas 3 cosas sí existen y están configuradas en Terraform para cuando despliegues a AWS real. Este entorno local es para probar rapido la logica de negocio sin desplegar.
 
 ## Requisitos
 
@@ -25,15 +25,22 @@ Estas 3 cosas sí existen y están correctamente configuradas en tu Terraform pa
 Desde esta carpeta (`local-deploy`), corre:
 
 ```bash
-docker compose up --build
+docker compose up -d --build dynamodb-local backend frontend
 ```
 
 Esto va a:
+
 1. Descargar e iniciar DynamoDB local (puerto 8000)
 2. Construir e iniciar el backend (puerto 3000)
 3. Construir e iniciar el frontend (puerto 8080)
 
 Espera a que la terminal muestre `Backend escuchando en el puerto 3000` antes de continuar.
+
+Para una demo completa con monitoreo incluido:
+
+```bash
+docker compose up -d --build dynamodb-local backend frontend prometheus grafana
+```
 
 ## Cargar datos de prueba
 
@@ -56,9 +63,12 @@ http://localhost:8080
 ```
 
 Desde ahí puedes:
-- Registrar un alumno nuevo
+- Registrar un alumno nuevo con DNI, datos del tutor y RFID
 - Ver la lista de alumnos (botón "Actualizar lista")
-- Marcar asistencia (RFID simulado o manual) usando el DNI `12345678` (Juan) como prueba
+- Eliminar el perfil de un alumno desde la tabla
+- Marcar asistencia por RFID simulado o manual. Para RFID se usa el identificador de tarjeta, por ejemplo `RFID12345678`.
+- Registrar asistencia manual con el DNI del alumno.
+- Si la hora local ya pasó la hora límite, el RFID simulado genera una alerta de tardanza en la consola del backend.
 - Consultar el historial de asistencia de ese mismo DNI
 
 ## Probar la API directamente (sin el frontend)
@@ -69,7 +79,7 @@ Con curl o Postman, apuntando a `http://localhost:3000`:
 # Registrar alumno
 curl -X POST http://localhost:3000/students \
   -H "Content-Type: application/json" \
-  -d '{"dni":"99999999","name":"Prueba Test","email":"prueba@correo.com","classroom":"1ro A"}'
+  -d '{"dni":"99999999","name":"Prueba Test","email":"prueba@correo.com","classroom":"1ro A","rfid":"RFID99999999"}'
 
 # Listar alumnos
 curl http://localhost:3000/students
@@ -77,10 +87,13 @@ curl http://localhost:3000/students
 # Marcar asistencia
 curl -X POST http://localhost:3000/attendance \
   -H "Content-Type: application/json" \
-  -d '{"dni":"12345678"}'
+  -d '{"rfid":"RFID12345678"}'
 
 # Historial de un alumno
 curl http://localhost:3000/attendance/history/12345678
+
+# Eliminar perfil de alumno
+curl -X DELETE http://localhost:3000/students/99999999
 ```
 
 ## Apagar todo
@@ -92,6 +105,12 @@ docker compose down
 Como DynamoDB local corre `-inMemory`, al apagar el contenedor **se pierden los datos** (tendrás que correr el seed de nuevo la próxima vez que levantes todo). Si quieres que los datos persistan entre reinicios, dime y te muestro cómo agregar un volumen.
 
 ## Monitoreo con Prometheus y Grafana
+
+Para levantar tambien el monitoreo local:
+
+```bash
+docker compose up -d prometheus grafana
+```
 
 El backend expone sus propias métricas en `http://localhost:3000/metrics` (formato Prometheus), incluyendo:
 
@@ -118,7 +137,7 @@ El dashboard muestra: peticiones por segundo por endpoint, tasa de errores, late
 
 ### Nota sobre el alcance de esta implementación
 
-Esto mide tu **backend local** (que reutiliza la misma lógica que tus lambdas). En un despliegue real a AWS, el monitoreo nativo lo da CloudWatch (que ya tienes configurado en tu Terraform: logs, X-Ray, alarmas). Grafana también puede conectarse directamente a CloudWatch como fuente de datos adicional si quieres un panel unificado — pregúntame si quieres que armemos eso también.
+Esto mide tu **backend local** (que reutiliza la misma lógica que tus Lambdas). En un despliegue real a AWS, el monitoreo nativo lo da CloudWatch (que ya tienes configurado en tu Terraform: logs, X-Ray, alarmas). Grafana tambien puede conectarse directamente a CloudWatch como fuente de datos adicional si quieres un panel unificado.
 
 ## Solución de problemas comunes
 

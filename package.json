@@ -1,0 +1,33 @@
+{
+  "name": "proyectoinfra",
+  "version": "1.0.0",
+  "description": "Este proyecto implementa un sistema de control de asistencia escolar con un backend serverless modelado en AWS y un entorno local con Docker. Permite registrar la asistencia de alumnos de forma automática mediante un lector RFID (ESP32) o de forma manual por parte del vigilante/director. La infraestructura AWS está definida como código usando Terraform, el chequeo de seguridad se ejecuta con Checkov y el análisis de calidad se integra con SonarQube/SonarCloud en GitHub Actions.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "scripts": {
+    "check": "bash scripts/check-local.sh",
+    "integration": "bash scripts/check-integration-tests.sh",
+    "install:lambda-deps": "bash scripts/install-lambda-deps.sh",
+    "plan:aws": "bash scripts/terraform-plan.sh",
+    "smoke:aws": "bash scripts/smoke-deployed.sh"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/leonardodia3/proyectoInfra.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/leonardodia3/proyectoInfra/issues"
+  },
+  "homepage": "https://github.com/leonardodia3/proyectoInfra#readme",
+  "devDependencies": {
+    "playwright": "^1.61.1",
+    "typescript": "^5.9.3"
+  }
+}

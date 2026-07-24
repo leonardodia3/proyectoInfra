@@ -1,5 +1,11 @@
 async function procesarAlertaTardanza(record, sns) {
-  const body = JSON.parse(record.body)
+  let body
+
+  try {
+    body = JSON.parse(record.body)
+  } catch (error) {
+    return { error: "Mensaje SQS inválido" }
+  }
 
   if (!body.dni) {
     return { error: "DNI es obligatorio en el mensaje" }

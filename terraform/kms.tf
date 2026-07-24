@@ -35,6 +35,22 @@ resource "aws_kms_key" "dynamo_key" {
             "kms:EncryptionContext:aws:logs:arn" = "arn:aws:logs:us-east-1:${data.aws_caller_identity.current.account_id}:*"
           }
         }
+      },
+      {
+        Sid    = "Allow CloudFront to read encrypted frontend objects"
+        Effect = "Allow"
+        Principal = {
+          Service = "cloudfront.amazonaws.com"
+        }
+        Action = [
+          "kms:Decrypt"
+        ]
+        Resource = "*"
+        Condition = {
+          ArnLike = {
+            "AWS:SourceArn" = "arn:aws:cloudfront::${data.aws_caller_identity.current.account_id}:distribution/*"
+          }
+        }
       }
     ]
   })

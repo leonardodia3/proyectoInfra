@@ -1,0 +1,70 @@
+@media (max-width: 720px) {
+  .layout { grid-template-columns: 1fr; }
+  .topbar { padding: 16px 20px; }
+  .panel-header { align-items: flex-start; flex-direction: column; }
+
+  .students-table,
+  .students-table thead,
+  .students-table tbody,
+  .students-table tr,
+  .students-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .students-table thead {
+    display: none;
+  }
+
+  .students-table tr {
+    background: var(--surface-soft);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 12px;
+    padding: 10px 12px;
+  }
+
+  .students-table tr.table-message-row {
+    background: transparent;
+    border: 0;
+    padding: 0;
+  }
+
+  .students-table td {
+    border-bottom: 0;
+    display: flex;
+    gap: 16px;
+    justify-content: space-between;
+    overflow-wrap: anywhere;
+    padding: 6px 0;
+  }
+
+  .students-table td::before {
+    color: var(--muted);
+    content: "";
+    font-weight: 600;
+  }
+
+  .students-table .table-message {
+    display: block;
+  }
+
+  .students-table .table-message::before {
+    content: none;
+  }
+
+  .students-table td:nth-child(1)::before { content: "DNI"; }
+  .students-table td:nth-child(2)::before { content: "RFID"; }
+  .students-table td:nth-child(3)::before { content: "Nombre"; }
+  .students-table td:nth-child(4)::before { content: "Correo"; }
+  .students-table td:nth-child(5)::before { content: "Salón"; }
+
+  .students-table tr.table-message-row td.table-message::before {
+    content: none;
+  }
+
+  .students-table td:last-child {
+    justify-content: flex-end;
+    padding-top: 10px;
+  }
+}

@@ -1,10 +1,12 @@
-async function registrarAsistenciaManual(body, db) {
+async function registrarAsistenciaManual(body, db, options = {}) {
+  const tableName = options.tableName || process.env.TABLE_NAME || "attendance"
+
   if (!body.dni) {
     return { error: "DNI es obligatorio" }
   }
 
   const alumno = await db.get({
-    TableName: "attendance",
+    TableName: tableName,
     Key: {
       pk: `STUDENT#${body.dni}`,
       sk: "PROFILE"
@@ -16,7 +18,7 @@ async function registrarAsistenciaManual(body, db) {
   }
 
   await db.put({
-    TableName: "attendance",
+    TableName: tableName,
     Item: {
       pk: `STUDENT#${body.dni}`,
       sk: `ATTENDANCE#${Date.now()}`,

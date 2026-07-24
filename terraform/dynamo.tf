@@ -1,12 +1,13 @@
+locals {
+  rfid_index_name = "rfid-index"
+}
+
 resource "aws_dynamodb_table" "attendance" {
-
-  name = "attendance"
-
-  billing_mode = "PAY_PER_REQUEST"
-
-  hash_key = "pk"
-
-  range_key = "sk"
+  name                        = "attendance"
+  billing_mode                = "PAY_PER_REQUEST"
+  deletion_protection_enabled = true
+  hash_key                    = "pk"
+  range_key                   = "sk"
 
   attribute {
     name = "pk"
@@ -16,6 +17,17 @@ resource "aws_dynamodb_table" "attendance" {
   attribute {
     name = "sk"
     type = "S"
+  }
+
+  attribute {
+    name = "rfid"
+    type = "S"
+  }
+
+  global_secondary_index {
+    name            = local.rfid_index_name
+    hash_key        = "rfid"
+    projection_type = "ALL"
   }
 
   # CKV_AWS_119 - Cifrado con KMS CMK
@@ -28,5 +40,4 @@ resource "aws_dynamodb_table" "attendance" {
   point_in_time_recovery {
     enabled = true
   }
-
 }

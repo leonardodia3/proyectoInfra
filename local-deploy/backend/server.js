@@ -9,10 +9,19 @@ const { registrarAsistencia } = require("./services/attendanceService")
 const { registrarAsistenciaManual } = require("./services/manualAttendanceService")
 const { listarAlumnos } = require("./services/listStudentsService")
 const { consultarHistorial } = require("./services/attendanceHistoryService")
+const { procesarAlertaTardanza } = require("./services/notifyAlertService")
 
 const app = express()
 app.use(cors())
 app.use(express.json())
+
+app.use((err, req, res, next) => {
+  if (err instanceof SyntaxError && err.status === 400 && "body" in err) {
+    return res.status(400).json({ message: "JSON inválido" })
+  }
+
+  next(err)
+})
 
 // ---- Métricas de Prometheus ----
 // Métricas por defecto de Node (uso de CPU, memoria, event loop, etc.)
@@ -63,7 +72,22 @@ const db = new AWS.DynamoDB.DocumentClient({
 const sns = {
   publish: (params) => ({
     promise: async () => {
-      console.log("📧 [SNS simulado] " + params.Subject + ": " + params.Message)
+      console.log("[SNS simulado] " + params.Subject + ": " + params.Message)
+      return {}
+    }
+  })
+}
+
+const sqs = {
+  sendMessage: (params) => ({
+    promise: async () => {
+      console.log("[SQS simulado] " + params.QueueUrl + ": " + params.MessageBody)
+      const resultado = await procesarAlertaTardanza({ body: params.MessageBody }, sns)
+
+      if (resultado.error) {
+        throw new Error(resultado.error)
+      }
+
       return {}
     }
   })
@@ -77,7 +101,7 @@ app.post("/students", async (req, res) => {
     return res.status(400).json({ message: resultado.error })
   }
 
-  await notificarAlumno(req.body, sns)
+  await notificarAlumno(resultado.alumno, sns)
   res.status(200).json({ message: "Alumno registrado" })
 })
 
@@ -89,14 +113,23 @@ app.get("/students", async (req, res) => {
 
 // POST /attendance -> asistencia por RFID
 app.post("/attendance", async (req, res) => {
-  const resultado = await registrarAsistencia(req.body, db)
+  const resultado = await registrarAsistencia(req.body, db, sqs, {
+    queueUrl: process.env.TARDANZA_QUEUE_URL || "local-tardanza-queue",
+    deadline: process.env.ATTENDANCE_DEADLINE || "08:00",
+    timeZone: process.env.ATTENDANCE_TIME_ZONE || "America/Lima"
+  })
 
   if (resultado.error) {
     return res.status(400).json({ message: resultado.error })
   }
 
   attendanceRegisteredTotal.inc({ method: "RFID" })
-  res.status(200).json({ message: "Asistencia registrada" })
+  res.status(200).json({
+    message: resultado.tardanza
+      ? "Asistencia registrada con tardanza"
+      : "Asistencia registrada",
+    tardanza: resultado.tardanza
+  })
 })
 
 // POST /attendance/manual -> asistencia manual

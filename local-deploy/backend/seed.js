@@ -26,11 +26,19 @@ async function crearTabla() {
     TableName: "attendance",
     AttributeDefinitions: [
       { AttributeName: "pk", AttributeType: "S" },
-      { AttributeName: "sk", AttributeType: "S" }
+      { AttributeName: "sk", AttributeType: "S" },
+      { AttributeName: "rfid", AttributeType: "S" }
     ],
     KeySchema: [
       { AttributeName: "pk", KeyType: "HASH" },
       { AttributeName: "sk", KeyType: "RANGE" }
+    ],
+    GlobalSecondaryIndexes: [
+      {
+        IndexName: "rfid-index",
+        KeySchema: [{ AttributeName: "rfid", KeyType: "HASH" }],
+        Projection: { ProjectionType: "ALL" }
+      }
     ],
     BillingMode: "PAY_PER_REQUEST"
   }).promise()
@@ -40,9 +48,9 @@ async function crearTabla() {
 
 async function cargarDatosDePrueba() {
   const alumnos = [
-    { pk: "STUDENT#12345678", sk: "PROFILE", name: "Juan Pérez", email: "juan@correo.com", classroom: "5to C" },
-    { pk: "STUDENT#87654321", sk: "PROFILE", name: "Ana Torres", email: "ana@correo.com", classroom: "4to B" },
-    { pk: "STUDENT#11223344", sk: "PROFILE", name: "Luis Ramírez", email: "luis@correo.com", classroom: "5to C" }
+    { pk: "STUDENT#12345678", sk: "PROFILE", name: "Juan Pérez", email: "juan@correo.com", classroom: "5to C", rfid: "RFID12345678" },
+    { pk: "STUDENT#87654321", sk: "PROFILE", name: "Ana Torres", email: "ana@correo.com", classroom: "4to B", rfid: "RFID87654321" },
+    { pk: "STUDENT#11223344", sk: "PROFILE", name: "Luis Ramírez", email: "luis@correo.com", classroom: "5to C", rfid: "RFID11223344" }
   ]
 
   for (const alumno of alumnos) {

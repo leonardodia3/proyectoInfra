@@ -17,3 +17,13 @@ output "esp32_api_key_id" {
   description = "ID de la API Key del ESP32 (el valor real se obtiene con un comando aparte)"
   value       = aws_api_gateway_api_key.esp32_key.id
 }
+
+output "frontend_url" {
+  description = "URL del panel web desplegado en CloudFront"
+  value       = "https://${aws_cloudfront_distribution.frontend.domain_name}"
+}
+
+output "frontend_bucket_name" {
+  description = "Bucket S3 privado que almacena el panel web"
+  value       = aws_s3_bucket.frontend.bucket
+}

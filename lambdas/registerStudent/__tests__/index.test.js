@@ -1,6 +1,7 @@
 jest.mock("aws-sdk", () => {
   const mockDb = {
     get: jest.fn().mockReturnValue({ promise: () => Promise.resolve({ Item: undefined }) }),
+    scan: jest.fn().mockReturnValue({ promise: () => Promise.resolve({ Items: [] }) }),
     put: jest.fn().mockReturnValue({ promise: () => Promise.resolve({}) })
   }
   const mockSns = {
@@ -20,7 +21,8 @@ test("registra un alumno correctamente vía el handler completo", async () => {
       dni: "12345678",
       name: "Juan Pérez",
       email: "juan@correo.com",
-      classroom: "5to C"
+      classroom: "5to C",
+      rfid: "RFID12345678"
     })
   }
 
@@ -28,4 +30,12 @@ test("registra un alumno correctamente vía el handler completo", async () => {
 
   expect(respuesta.statusCode).toBe(200)
   expect(JSON.parse(respuesta.body).message).toBe("Alumno registrado")
+  expect(respuesta.headers["Access-Control-Allow-Origin"]).toBe("*")
+})
+
+test("responde 400 cuando el body no es JSON valido", async () => {
+  const respuesta = await handler({ body: "{no-json" })
+
+  expect(respuesta.statusCode).toBe(400)
+  expect(JSON.parse(respuesta.body).message).toBe("JSON inválido")
 })

@@ -14,9 +14,15 @@ services:
       - "3000:3000"
     environment:
       - DYNAMODB_ENDPOINT=http://dynamodb-local:8000
+      - RFID_INDEX_NAME=rfid-index
       - PORT=3000
     depends_on:
       - dynamodb-local
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/health >/dev/null 2>&1 || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
 
   frontend:
     build: ./frontend
@@ -24,7 +30,8 @@ services:
     ports:
       - "8080:80"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
 
   prometheus:
     image: prom/prometheus:latest
@@ -34,7 +41,8 @@ services:
     volumes:
       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
 
   grafana:
     image: grafana/grafana:latest

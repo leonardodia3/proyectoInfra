@@ -1,4 +1,4 @@
-name: SonarQube Cloud
+name: Quality Gates
 
 on:
   push:
@@ -9,17 +9,41 @@ on:
       - main
 
 jobs:
-  sonar:
-    name: Analisis de calidad con SonarQube Cloud
+  quality:
+    name: Unit, integration, Checkov and SonarQube
     runs-on: ubuntu-latest
 
     steps:
-      - name: Descargar codigo
+      - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Ejecutar analisis SonarQube Cloud
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.7
+
+      - name: Setup Python for Checkov
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Checkov
+        run: python -m pip install --upgrade checkov
+
+      - name: Unit, integration and Terraform validation
+        run: SKIP_CHECKOV=true bash scripts/check-local.sh
+
+      - name: Checkov IaC security scan
+        run: checkov -d terraform --framework terraform --quiet --compact
+
+      - name: SonarQube Cloud analysis
         uses: SonarSource/sonarqube-scan-action@v6
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
